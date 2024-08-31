@@ -1,44 +1,35 @@
 import Comment from '../models/commentModel.js';
-import Reply from '../models/replyModel.js';  
 
+// Add a reply to a comment
 export const addReply = async (req, res) => {
     try {
         const { commentId } = req.params;
         const { content } = req.body;
 
-        // Validate the content
+        
         if (!content || content.trim() === '') {
             return res.status(400).json({ error: 'Reply content cannot be empty' });
         }
-
-        
+ 
         const comment = await Comment.findById(commentId);
         if (!comment) {
             return res.status(404).json({ error: 'Comment not found' });
         }
 
-      
-        const reply = new Reply({
+ 
+        const reply = {
             content: content.trim(),
-            author: req.user._id,  
-            createdAt: new Date()
-        });
+            author: req.user._id,
+            createdAt: new Date()  
+        };
 
-        await reply.save();
-
-       
-        comment.replies.push(reply._id); 
+         
+        comment.replies.push(reply);
         await comment.save();
 
-     
-        const populatedComment = await Comment.findById(commentId).populate({
-            path: 'replies',
-            populate: { path: 'author' }
-        });
-
-        res.status(200).json({ message: 'Reply added successfully', comment: populatedComment });
+        res.status(200).json({ message: 'Reply added successfully', comment });
     } catch (err) {
-        console.error(err); 
+        console.error(err);  
         res.status(500).json({ error: 'Failed to add reply' });
     }
 };
